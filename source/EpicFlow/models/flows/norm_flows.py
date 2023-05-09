@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import nflows
 from nflows import flows, transforms, distributions
-from epicflow.models.flows.permutation import permutation_layer
+from EpicFlow.models.flows.permutation import permutation_layer
 
 def masked_autoregressive_flow(args,
                                RQS_tail_bound=12, 

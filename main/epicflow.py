@@ -8,13 +8,16 @@ import copy
 from copy import deepcopy
 import argparse
 import json
+import h5py
+# from jetnet.datasets import JetNet
 
-from epicflow.utils.base import make_dir, copy_parser, save_arguments
-from epicflow.models.flows.norm_flows import masked_autoregressive_flow, coupling_flow
-from epicflow.models.training import Train_Model, sampler
-from epicflow.models.loss import neglogprob_loss
-from epicflow.data.plots import plot_data_projections
-from epicflow.data.transform import Preprocess
+
+from EpicFlow.utils.base import logit, expit, Id,  make_dir, copy_parser, save_arguments
+from EpicFlow.models.flows.norm_flows import masked_autoregressive_flow, coupling_flow
+from EpicFlow.models.training import Train_Model, sampler
+from EpicFlow.models.loss import neglogprob_loss
+from EpicFlow.data.plots import plot_data_projections
+from EpicFlow.data.transform import get_jet_data
 
 sys.path.append("../")
 torch.set_default_dtype(torch.float64)
@@ -27,7 +30,7 @@ params.add_argument('--workdir',      help='working directory', type=str)
 params.add_argument('--device',       default='cuda:1',         help='where to train')
 params.add_argument('--dim',          default=3,                help='dimensionalaty of data: (pT, eta, phi)', type=int)
 params.add_argument('--num_mc',       default=100,              help='number of MC samples for integration', type=int)
-params.add_argument('--loss',         default=deconv_loss,      help='loss function')
+params.add_argument('--loss',         default=neglogprob_loss,      help='loss function')
 
 #...flow params:
 
@@ -56,7 +59,7 @@ params.add_argument('--dropout',      default=0.1,           help='dropout proba
 
 #... data params:
 
-params.add_argument('--jet_sample',  default='top',       help='sun position [kpc] wrt galactic center', type=list)
+params.add_argument('--jet_type',  default='top',         help='jet data type: top or quark', type=str)
 params.add_argument('--num_const',   default=30,          help='number of max constituents per jet', type=int)
 params.add_argument('--num_gen',     default=10000,       help='number of sampled jets from model', type=int)
 params.add_argument('--num_chop',    default=None,        help='keep n_chop hardest contituents in each jets', type=int)
@@ -73,6 +76,7 @@ if __name__ == '__main__':
 
     if args.jet_type == 'top' :  data_file =  "./data/t.hdf5"
     if args.jet_type == 'quark' :  data_file =  "./data/q.hdf5"
+
     args.workdir = make_dir('EpicFlow_{}_MC_{}'.format( args.jet_type, args.num_mc), sub_dirs=['data', 'results'], overwrite=False)
     save_arguments(args, name='inputs.json')
     print("#================================================")
@@ -87,7 +91,7 @@ if __name__ == '__main__':
 
     #...store parser args
 
-
+    print(jets.shape)
 
     #...Prepare train/test samples
 
@@ -102,6 +106,8 @@ if __name__ == '__main__':
     test_sample = DataLoader(dataset=torch.Tensor(test).to(args.device), 
                              batch_size=args.batch_size,
                              shuffle=False)
+
+
 
     # #...define model
 

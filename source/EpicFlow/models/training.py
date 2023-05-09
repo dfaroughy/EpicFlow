@@ -4,8 +4,8 @@ import torch.nn as nn
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
-from epicflow.models.loss import calculate_loss
-from epicflow.data.plots import plot_data_projections, plot_loss
+from EpicFlow.models.loss import calculate_loss
+from EpicFlow.data.plots import plot_data_projections, plot_loss
 
 
 def Train_Model(model, training_sample, validation_sample, args, show_plots=True, save_best_state=True):        

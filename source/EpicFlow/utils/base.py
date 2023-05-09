@@ -7,6 +7,19 @@ import json
 import inspect
 import argparse
 
+
+def logit(x,a=1e-5):
+    num=a+(1-2*a)*x
+    den=1-num
+    return np.log(num/den)
+
+def expit(x,a=1e-5):
+    num=a-(1-a)*np.exp(x)
+    den=(2*a-1)*(1+np.exp(x))
+    return num/den
+
+def Id(x):return x
+
 def make_dir(path, overwrite=False, sub_dirs=False):  
     Directory = path
     if overwrite:

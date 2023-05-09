@@ -1,8 +1,111 @@
 import time
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 import torch
-from epicflow.data.plots import plot_data_projections
+from EpicFlow.utils.base import Id, logit, expit
+
+
+def get_jet_data(jet_net_sample, transform_pt=None, remove_mask=False):
+
+    if not transform_pt: transform_pt=Id
+    jets=dict()
+    for i in range(1+jet_net_sample.shape[1]): jets[i]=list()
+    for jet in tqdm(jet_net_sample, desc="getting jet data"):
+        jet_masked=[]
+        jet_unmasked=[]
+        for particle in jet:
+            eta=particle[0]
+            phi=particle[1]
+            pt=transform_pt(particle[2])
+            mask=particle[3]
+            if mask: 
+                jet_unmasked.append([eta, phi, pt])
+            jet_masked.append([eta, phi, pt, mask])
+        n=len(jet_unmasked)
+        jets[n].append(jet_unmasked if remove_mask else jet_masked)
+    return jets
+
+
+def generate_jets(flow_model, 
+                  context_model, 
+                  num_samples, 
+                  num_constituents, 
+                  path, 
+                  device):
+    jets=[]
+    with open(path, 'w') as file:
+        for _ in tqdm(range(num_samples), desc="sampling {} jets".format(num_samples)):
+            z_glob, z_loc, z_glob_in, z_loc_in = context_model.sample_context(size_global=1, size_local=num_constituents)
+            z_context = torch.cat([z_glob.repeat(num_constituents,1),
+                                   torch.flatten(z_loc, end_dim=1),
+                                   z_glob_in.repeat(num_constituents,1),
+                                   torch.flatten(z_loc_in, end_dim=1)],1)
+            jet=flow_model.sample(num_samples=1, context=z_context.detach())     
+            jet_pT_sorted=torch.stack(sorted(jet.reshape(num_constituents,3), key=lambda jet: jet[2], reverse=True)).detach().tolist()
+            jets.append(jet_pT_sorted)
+            for constituent in jet[0]:
+                file.write("%s\t" % constituent.detach().tolist())
+            file.write('\n')
+    return jets
+
+def get_particle_kinematics(data, transform_pt=None):
+
+    eta={}; phi={}; pt={}
+
+    if not transform_pt: transform_pt=Id
+        
+    eta['all']=list(np.concatenate([np.array(x).T[0] for x in data]))
+    phi['all']=list(np.concatenate([np.array(x).T[1] for x in data]))
+    pt['all']=[transform_pt(x) for x in list(np.concatenate([np.array(x).T[2] for x in data]))]
+    multiplicity=[len(x) for x in data]
+
+    for i in range(np.max(multiplicity)):
+        eta[i]=[]; phi[i]=[]; pt[i]=[]
+
+    for x in data:
+        for i in range(np.max(multiplicity)):
+            if i<=len(x)-1:
+                eta[i].append(float(x[i][0]))
+                phi[i].append(float(x[i][1]))
+                pt[i].append(transform_pt(float(x[i][2])))
+
+    return eta, phi, pt
+
+def get_jet_kinematics(data, transform_pt=None):
+
+    pt_rel={}; m_rel={}
+    
+    def Id(x):return x
+    if not transform_pt: transform_pt=Id
+
+    multiplicity=[len(x) for x in data]
+
+    for i in range(np.max(multiplicity)+1):
+        pt_rel[i]=[]; m_rel[i]=[]
+
+    for jet in data:
+        
+        N=len(jet)
+        jet_pt=0.; jet_px=0.; jet_py=0.; jet_pz=0.; jet_e=0.
+        
+        for particle in jet:
+            
+            theta=2.*np.arctan(np.exp(-float(particle[0])))
+            phi=float(particle[1])
+            e=transform_pt(float(particle[2])) / np.sin(theta)
+
+            jet_e  += e
+            jet_px += e * np.sin(theta) * np.cos(phi)
+            jet_py += e * np.sin(theta) * np.sin(phi)
+            jet_pz += e * np.cos(theta) 
+            jet_pt += transform_pt(float(particle[2])) 
+
+        pt_rel[N].append(jet_pt) 
+        m_rel[N].append(np.sqrt(jet_e**2-jet_px**2-jet_py**2-jet_pz**2))
+                                   
+    return multiplicity, pt_rel, m_rel
+
 
 class GaiaTransform:
 
