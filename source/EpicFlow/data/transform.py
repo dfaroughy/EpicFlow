@@ -11,7 +11,7 @@ def get_jet_data(jet_net_sample, transform_pt=None, remove_mask=False):
     if not transform_pt: transform_pt=Id
     jets=dict()
     for i in range(1+jet_net_sample.shape[1]): jets[i]=list()
-    for jet in tqdm(jet_net_sample, desc="getting jet data"):
+    for jet in tqdm(jet_net_sample[:10000], desc="getting jet data"):
         jet_masked=[]
         jet_unmasked=[]
         for particle in jet:

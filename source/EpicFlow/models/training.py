@@ -5,24 +5,22 @@ import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
 from EpicFlow.models.loss import calculate_loss
-from EpicFlow.data.plots import plot_data_projections, plot_loss
 
-
-def Train_Model(model, training_sample, validation_sample, args, show_plots=True, save_best_state=True):        
+def Train_Model(model, context, training_sample, validation_sample, args, show_plots=True, save_best_state=True):        
     
-    train = Train_Epoch(model, args)
-    test = Evaluate_Epoch(model, args)
-    
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)  
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.max_epochs)
+    train = Train_Epoch(model, context, args)
+    test = Evaluate_Epoch(model, context, args)
+        
+    optimizers = { 'model' : torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5), 
+                   'context': torch.optim.AdamW(context.parameters(), lr=args.lr, weight_decay=1e-5) }
 
     print('INFO: number of training parameters: {}'.format(sum(p.numel() for p in model.parameters())))
+    print('INFO: number of context parameters: {}'.format(sum(p.numel() for p in context.parameters())))
 
     for epoch in tqdm(range(args.max_epochs), desc="epochs"):
 
-        train.fit(training_sample, optimizer)       
+        train.fit(training_sample, optimizers)       
         test.validate(validation_sample)
-        scheduler.step() 
 
         print("\t Epoch: {}".format(epoch))
         print("\t Training loss: {}".format(train.loss))
@@ -55,10 +53,11 @@ def sampler(model, num_samples, batch_size=10000):
 
 class Train_Epoch(nn.Module):
 
-    def __init__(self, model, args):
+    def __init__(self, model, context, args):
         super(Train_Epoch, self).__init__()
 
         self.model = model
+        self.context = context
         self.loss = 0
         self.loss_per_epoch = []
         self.args = args
@@ -66,16 +65,19 @@ class Train_Epoch(nn.Module):
     def fit(self, data, optimizer):
 
         self.model.train()
+        self.context.train()
         self.loss = 0
 
         for batch in tqdm(data, desc="batch"):
 
             if self.args.batch_steps <= 1: 
 
-                current_loss = calculate_loss(self.model, batch, self.args)
+                current_loss = calculate_loss(self.model, self.context, batch, self.args)
                 current_loss.backward()
-                optimizer.step()  
-                optimizer.zero_grad()
+                optimizer['model'].step()
+                optimizer['context'].step()  
+                optimizer['model'].zero_grad()
+                optimizer['context'].zero_grad()
 
                 self.loss += current_loss.item() / len(data) 
 
@@ -89,8 +91,10 @@ class Train_Epoch(nn.Module):
                     current_loss.backward()
                     sub_batch_loss += current_loss.item() / self.args.batch_size
 
-                optimizer.step()
-                optimizer.zero_grad()
+                optimizer['model'].step()
+                optimizer['context'].step()  
+                optimizer['model'].zero_grad()
+                optimizer['context'].zero_grad()
 
                 self.loss += sub_batch_loss / len(data) 
 
@@ -100,10 +104,11 @@ class Train_Epoch(nn.Module):
 
 class Evaluate_Epoch(nn.Module):
 
-    def __init__(self, model, args):
+    def __init__(self, model, context,  args):
         super(Evaluate_Epoch, self).__init__()
 
         self.model = model
+        self.context = context
         self.loss = 0
         self.loss_per_epoch = []
         self.epoch = 0
@@ -116,6 +121,7 @@ class Evaluate_Epoch(nn.Module):
     def validate(self, data):
 
         self.model.eval()
+        self.context.eval()
         self.loss = 0
         self.epoch += 1
 
@@ -123,7 +129,7 @@ class Evaluate_Epoch(nn.Module):
 
             if self.args.batch_steps <= 1: 
             
-                current_loss = calculate_loss(self.model, batch, self.args)
+                current_loss = calculate_loss(self.model, self.context, batch, self.args)
                 self.loss += current_loss.item() / len(data)
         
             else:
@@ -149,6 +155,7 @@ class Evaluate_Epoch(nn.Module):
             self.loss_min = self.loss
             self.patience = 0
             self.best_model = deepcopy(self.model)
+            self.best_context = deepcopy(self.context)
 
             if show_plots:
                 with torch.no_grad():
@@ -161,7 +168,8 @@ class Evaluate_Epoch(nn.Module):
                                                     ylim=[(-10, 10), (-10, 10), (-10, 10)])
             if save_best_state:
                 torch.save(self.best_model.state_dict(), self.args.workdir + '/best_model.pth')
-        
+                torch.save(self.best_context.state_dict(), self.args.workdir + '/best_context.pth')
+
         else: self.patience += 1
         if self.patience >= self.args.max_patience: self.terminate = True
     

@@ -4,72 +4,42 @@ import torch.nn as nn
 import numpy as np
 from copy import deepcopy
 
-def calculate_loss(model, data, args, loss_func=None, reduction=torch.mean):
+def calculate_loss(model, context, data, args, loss_func=None, reduction=torch.mean):
 	if not loss_func: loss_func = args.loss
-	loss = reduction(loss_func(model, data, args))
+	loss = reduction(loss_func(model, context, data, args))
 	return loss
 
-def neglogprob_loss(model, batch, args):
-	d = args.dim
-	loss = - model.log_prob(batch[:, :d])
-	return loss
+def epic_loss(model, context, batch, args):
 
-
-def deconv_loss(model, batch, args):
-
-	d = args.dim
 	n = args.num_mc
-	device = args.device
 
-	batch = batch.repeat_interleave(n, 0).to(device)                   # ABC... -> AABBCC...
-	x = batch[:, :d]													  # x = (x1, x2)
-	cov_flat = batch[:, d:] 											  # cov = (c11, c12, c21, c22)  flat
-	cov_matrix = torch.reshape(cov_flat, (-1, d, d)).to(device)         # cov = ((c11, c12),(c21, c22))  reshaped
+	#... repeat batch for MC integration
 
-	eps = torch.randn_like(x)                                         # sample eps ~ N(0,1) 
-	eps = torch.reshape(eps,(-1, d, 1)).to(device)                      # reshapes eps dim(2) -> 2x1 vector 
-	x_noisy = x + torch.squeeze(torch.bmm(cov_matrix, eps))            # x + sigma * eps
-	
-	loss = - torch.logsumexp(torch.reshape(model.log_prob(x_noisy),(-1, n)),dim=-1) 
-	loss +=  torch.log(torch.tensor(1.0 if not n else n))
-	
-	return loss
+	print('batch = ',batch.shape)
+	batch = batch.repeat_interleave(n, dim=0)
+	batch = torch.flatten(batch, end_dim=1)
 
+	print('batch = ',batch.shape) 
 
-def neglogprob_joint_loss(model, batch, args):
+	#... generate local and global contexts: 
 
-	d = args.dim
-	n = args.num_mc
-	device = args.device
+	z_glob, z_loc, z_glob_in, z_loc_in = context.sample(n * args.batch_size, args.num_const)  # on device already
 
-	x = batch[:, :d]													# x = (x1, x2)
-	cov_flat = batch[:, d:]   											# (c11, c12, c21, c22)
-	cov_flat = torch.cat((cov_flat[:, :1], cov_flat[:, -1:]), dim=1 )     # keep diagonal elements only: (c11, c22)
-	x_covs = torch.cat((x, cov_flat), dim=1)                            # (x1, x2, c11, c22)   
+	print('z = ',z_glob.shape, z_loc.shape, z_glob_in.shape, z_loc_in.shape) 
 
-	loss = - model.log_prob(x_covs)
+	z_glob = z_glob.repeat_interleave(args.num_const, dim=0)
+	z_loc = torch.flatten(z_loc, end_dim=1)
+	z_glob_in = z_glob_in.repeat_interleave(args.num_const, dim=0)
+	z_loc_in = torch.flatten(z_loc_in, end_dim=1)
+	z_context = torch.cat([z_glob, z_loc, z_glob_in, z_loc_in], 1)
 
-	return loss
+	#... compute log_prob over batch with generated context:
 
+	batch = batch.to(args.device)
 
-def deconv_joint_loss(model, batch, args):
-
-	d = args.dim
-	n = args.num_mc
-	device = args.device
-
-	batch = batch.repeat_interleave(n,0).to(device)                   # ABC... -> AAABBBCCC...
-	x = batch[:, :d]												  # x = (x1, x2)
-	cov_flat = batch[:, d:]   									      # (c11, c12, c21, c22)
-	cov_matrix = torch.reshape(cov_flat, (-1, d, d)).to(device)       # reshapes ((c11, c12),(c21, c22))
-	cov_flat = torch.cat((cov_flat[:,:1], cov_flat[:,-1:]), dim=1 )    # keep diagonal elements only: (c11, c22)
-
-	eps = torch.randn_like(x)                                         # sample eps ~ N(0,1) 
-	eps = torch.reshape(eps,(-1, d, 1)).to(device)                      # reshapes eps dim(2) -> 2x1 vector 
-	x_noisy = x + torch.squeeze(torch.bmm(cov_matrix, eps))           # data + cov*eps
-	x_covs_noisy = torch.cat((x_noisy, cov_flat), dim=1)              # (x1, x2, c11, c22)       
-
-	loss = - torch.logsumexp(torch.reshape(model.log_prob(x_covs_noisy),(-1, n)),dim=-1)
+	loss = model.log_prob(batch, context=z_context)   
+	loss = torch.sum(log_prob.reshape((n* batch_size, -1)), dim=1)
+	loss = - torch.logsumexp(log_prob.reshape((-1, n)), dim=1)
 	loss +=  torch.log(torch.tensor(1.0 if not n else n))
 
 	return loss

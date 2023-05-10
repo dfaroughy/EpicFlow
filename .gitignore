@@ -1,3 +1,12 @@
+# peronal
+._*
+.DS_store
+main/Results_Epic_Flow__*
+source/EpicFlow/models/._*
+main/._*
+main/.DS_Store
+source/EpicFlow/models/flows/._*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
