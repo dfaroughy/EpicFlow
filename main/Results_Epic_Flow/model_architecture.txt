@@ -1,0 +1,198 @@
+model = Flow(
+  (_transform): CompositeTransform(
+    (_transforms): ModuleList(
+      (0): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (1): Permutation()
+      (2): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (3): Permutation()
+      (4): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (5): Permutation()
+      (6): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (7): Permutation()
+      (8): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (9): Permutation()
+      (10): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (11): Permutation()
+      (12): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (13): Permutation()
+      (14): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (15): Permutation()
+      (16): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (17): Permutation()
+      (18): PiecewiseRationalQuadraticCouplingTransform(
+        (transform_net): ResidualNet(
+          (initial_layer): Linear(in_features=28, out_features=128, bias=True)
+          (blocks): ModuleList(
+            (0-1): 2 x ResidualBlock(
+              (batch_norm_layers): ModuleList(
+                (0-1): 2 x BatchNorm1d(128, eps=0.001, momentum=0.1, affine=True, track_running_stats=True)
+              )
+              (context_layer): Linear(in_features=26, out_features=128, bias=True)
+              (linear_layers): ModuleList(
+                (0-1): 2 x Linear(in_features=128, out_features=128, bias=True)
+              )
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (final_layer): Linear(in_features=128, out_features=89, bias=True)
+        )
+      )
+      (19): Permutation()
+    )
+  )
+  (_distribution): StandardNormal()
+  (_embedding_net): Identity()
+)

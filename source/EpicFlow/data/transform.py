@@ -11,7 +11,7 @@ def get_jet_data(jet_net_sample, transform_pt=None, remove_mask=False):
     if not transform_pt: transform_pt=Id
     jets=dict()
     for i in range(1+jet_net_sample.shape[1]): jets[i]=list()
-    for jet in tqdm(jet_net_sample[:10000], desc="getting jet data"):
+    for jet in tqdm(jet_net_sample, desc="getting jet data"):
         jet_masked=[]
         jet_unmasked=[]
         for particle in jet:
@@ -36,7 +36,7 @@ def generate_jets(flow_model,
     jets=[]
     with open(path, 'w') as file:
         for _ in tqdm(range(num_samples), desc="sampling {} jets".format(num_samples)):
-            z_glob, z_loc, z_glob_in, z_loc_in = context_model.sample_context(size_global=1, size_local=num_constituents)
+            z_glob, z_loc, z_glob_in, z_loc_in = context_model.sample(size_glob=1, size_loc=num_constituents)
             z_context = torch.cat([z_glob.repeat(num_constituents,1),
                                    torch.flatten(z_loc, end_dim=1),
                                    z_glob_in.repeat(num_constituents,1),
@@ -105,6 +105,46 @@ def get_jet_kinematics(data, transform_pt=None):
         m_rel[N].append(np.sqrt(jet_e**2-jet_px**2-jet_py**2-jet_pz**2))
                                    
     return multiplicity, pt_rel, m_rel
+
+
+def particle_plots(data_sim, data_gen, path, pT_ordered_constituents=None):
+
+    eta_sim, phi_sim, pt_sim = get_particle_kinematics(data_sim, transform_pt=expit)
+    eta_gen, phi_gen, pt_gen = get_particle_kinematics(data_gen, transform_pt=expit)
+    n=len(pT_ordered_constituents)+1
+    figure = plt.figure(figsize=(18,5*n))
+    plot(figure, pt_sim['all'] , pt_gen['all'],  grid=[n,3,1], label=r'$p_T^{rel}$')
+    plot(figure, eta_sim['all'], eta_gen['all'], grid=[n,3,2], xlim=[-1,1], label=r'$\eta^{rel}$')
+    plot(figure, phi_sim['all'], phi_gen['all'], grid=[n,3,3], xlim=[-1,1], label=r'$\phi^{rel}$')
+    
+    idx=np.arange(4, n*3+4)
+    idx=idx.reshape(n, 3).tolist()
+    
+    if pT_ordered_constituents:
+        for i, N in enumerate(pT_ordered_constituents):
+            plot(figure, pt_sim[N-1],  pt_gen[N-1],  grid=[n,3,idx[i][0]], label=r'$p_T^{rel}$'+' particle # {}'.format(N))
+            plot(figure, eta_sim[N-1], eta_gen[N-1], grid=[n,3,idx[i][1]],  xlim=[-1,1], label=r'$\eta^{rel}$'+' particle # {}'.format(N))
+            plot(figure, phi_sim[N-1], phi_gen[N-1], grid=[n,3,idx[i][2]],  xlim=[-1,1], label=r'$\phi^{rel}$'+' particle # {}'.format(N))
+
+    figure.tight_layout()
+    plt.savefig(path)
+
+
+def jet_plots(data_sim, data_gen, path, multiplicities=None):
+
+    multiplicity_sim, pt_sim, m_sim = get_jet_kinematics(data_sim, transform_pt=expit)
+    multiplicity_gen, pt_gen, m_gen = get_jet_kinematics(data_gen, transform_pt=expit)
+    n=len(multiplicities)
+    figure = plt.figure(figsize=(18,5*n))
+    if multiplicities:
+        for i, N in enumerate(multiplicities):
+            plot(figure, multiplicity_sim[N] , multiplicity_gen[N], xlim=[0,40], grid=[n,3,1], n_bins=100, label=r'multiplicity')
+            plot(figure, pt_sim[N] , pt_gen[N],  xlim=[0,1.5], grid=[n,3,2],  n_bins=100,label=r'$p_T^{rel}$')
+            plot(figure, m_sim[N] , m_gen[N], grid=[n,3,3], n_bins=100, label=r'$m^{rel}$')
+
+    figure.tight_layout()
+    plt.savefig(path)
+
 
 
 class GaiaTransform:
