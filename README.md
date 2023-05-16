@@ -1,4 +1,4 @@
-# EpicFlow
+# Epic Flow
 
 ## installation
 
